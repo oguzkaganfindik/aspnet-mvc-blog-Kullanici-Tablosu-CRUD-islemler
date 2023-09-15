@@ -1,8 +1,28 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Builder;
+using App.Web.Mvc.Infrastructure.Context;
+using App.Web.Mvc.Models.Entities.Concrete;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+builder.Services.AddIdentity<AppUser, IdentityRole>(x =>
+{
+    x.SignIn.RequireConfirmedPhoneNumber = false;
+    x.SignIn.RequireConfirmedAccount = false;
+    x.SignIn.RequireConfirmedEmail = false;
+    x.User.RequireUniqueEmail = true;
+    x.Password.RequiredLength = 1;
+    x.Password.RequiredUniqueChars = 0;
+    x.Password.RequireUppercase = false;
+    x.Password.RequireNonAlphanumeric = false;
+    x.Password.RequireLowercase = false;
+})
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -22,6 +42,8 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllerRoute(
@@ -29,8 +51,8 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
-    name: "Admin",
-    pattern: "Admin/{controller=AdminHome}/{action=Index}/{id?}");
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
     name: "PageDetail",
